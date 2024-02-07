@@ -1,0 +1,105 @@
+const pageUsers = [];
+
+document.addEventListener("DOMContentLoaded", function () {
+  // Cria lista de usuários a partir da chamada da API
+  fetchUsers();
+});
+
+function displayUsers() {
+  const userList = document.getElementById("user-list");
+  userList.innerHTML = "";
+  pageUsers.forEach(user => {
+    const listItem = document.createElement("li");
+    listItem.setAttribute("class", "card");
+
+    // Adiciona todos os campos disponíveis e o botão de remoção
+    listItem.innerHTML = `<div class="space"><strong>Nome:</strong> ${user.firstname}</div>
+  <div class="space"><strong>Sobrenome:</strong> ${user.lastname}</div>
+  <div class="space"><strong>Email:</strong> ${user.email}</div>
+  <div class="space"><strong>Idade:</strong> ${user.age || 'N/A'}</div>
+  <div class="space"><strong>Foto:</strong> ${user.photo ? `<img src="${user.photo}" alt="Foto do usuário" style="max-width: 100%; height: auto;">` : 'N/A'}</div>
+  <button onclick="removeUser(${user.id})" class="remove-btn">
+    <i class="bi bi-trash"></i>
+  </button>`;
+
+    userList.appendChild(listItem);
+  });
+}
+
+// Função para validar o email
+function validateEmail(email) {
+  var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(email);
+}
+
+// Função para validar o formulário
+function validateForm(nome, sobrenome, email, idade) {
+  if (nome.length < 3 || nome.length > 50) {
+    alert('Nome inválido! O nome não pode ter menos do que 3 e mais do que 50 caracteres');
+    return false;
+  }
+  if (sobrenome.length < 3 || sobrenome.length > 50) {
+    alert('Sobrenome inválido! O sobrenome não pode ter menos do que 3 e mais do que 50 caracteres');
+    return false;
+  }
+  if (!validateEmail(email)) {
+    alert('E-mail inválido!');
+    return false;
+  }
+  if (isNaN(idade) || idade <= 0 || idade >= 120) {
+    alert('Idade inválida! A idade deve corresponder a um número positivo e menor do que 120');
+    return false;
+  }
+  return true;
+}
+
+function fetchUsers() {
+  
+  const apiUrl = "https://dummyjson.com/users";
+  // Faz uma requisição à API
+  fetch(apiUrl)
+    .then(response => response.json())
+    .then(users_object => {
+      // Itera sobre a lista de usuários e cria elementos HTML
+      users_object.users.forEach(user => {
+        pageUsers.push(new User(user.id, user.firstName, user.lastName, user.email, user.age, user.photo));
+      });
+      console.log(pageUsers);
+      // Mostra lista de usuários
+      displayUsers();
+    })
+    .catch(error => console.error("Erro ao obter dados da API:", error));
+}
+
+function addUser() {
+  const addUserForm = document.getElementById("add-user-form");
+
+  // Obtem os valores do formulário
+  const id = pageUsers.length > 0 ? pageUsers[pageUsers.length - 1].id + 1 : 1;
+  const firstname = document.getElementById("name").value;
+  const lastname = document.getElementById("surname").value;
+  const email = document.getElementById("email").value;
+  const age = document.getElementById("age").value;
+  const photo = document.getElementById("photo").value;
+
+  // Valida o formulário antes de adicionar o usuário
+  if (validateForm(firstname, lastname, email, age)) {
+    
+    pageUsers.push(new User(id, firstname, lastname, email, age, photo || null));
+    // Limpa o formulário
+    addUserForm.reset();
+    // Mostra lista de usuários
+    displayUsers();
+  }
+}
+
+function removeUser(userId) {
+  // Checa se é o usuário correto
+  console.log("Removendo usuário com ID:", userId);
+  // Encontra índice do usuário que vai ser removido
+  const userIndexToRemove = pageUsers.findIndex((user) => user.id === userId);
+  // Remove usuário da lista
+  pageUsers.splice(userIndexToRemove, 1);
+  // Atualiza lista na tela
+  displayUsers();
+}
